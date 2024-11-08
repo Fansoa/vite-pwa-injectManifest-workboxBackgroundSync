@@ -7,7 +7,8 @@ function App() {
       <form onSubmit={async (e) => {
         e.preventDefault()
         return await fetch(
-          "http://localhost:3000", 
+          // TODO: Replace url by hosted server to simulated offline connection (DO NOT USE CHROME DEVTOOLS OFFLINE. The offline checkbox in DevTools only affects requests from the page. Service Worker requests will continue to go through.)
+          "https://hosted.express.server.com", 
           {
             method: 'POST',
             headers: [
