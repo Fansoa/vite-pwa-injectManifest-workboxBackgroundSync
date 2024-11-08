@@ -1,30 +1,50 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Contexte
+En ce moment, je travaille sur un projet de création de PWA, avec l'environnement VITE PWA. (ReactTS)
 
-Currently, two official plugins are available:
+Pour le build j'ai opté pour la méthode [injectManifest](https://vite-pwa-org.netlify.app/workbox/inject-manifest.html), et je me sers de [Workbox](https://developer.chrome.com/docs/workbox) pour m'aider à gérer les service workers.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### But
+Je souhaite pouvoir stocker les requêtes envoyées par l'utilisateur car celui-ci sera mobile et n'aura pas toujours accès au réseau.
 
-## Expanding the ESLint configuration
+### Mon problème
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+fichier important du repo à regarder: `App.tsx`, `sw.ts`
 
-- Configure the top-level `parserOptions` property like this:
+Lorsque je coupe le Wifi de mon ordinateur pour simuler l'envoi de requête HTTP de type POST hors-ligne, la requête est bien stocké dans l'indexedDB mais celle-ci n'est pas rappelé une fois le réseau à nouveau disponible
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+Voila pourquoi j'ai hébergé mon serveur express: DO NOT USE CHROME DEVTOOLS OFFLINE. The offline checkbox in DevTools only affects requests from the page. Service Worker requests will continue to go through.
+
+### Liens utiles
+Je me suis basé sur cette documentation: https://developer.chrome.com/docs/workbox/retrying-requests-when-back-online?hl=fr
+
+
+### Pour Tester: 
+- `npm run build`
+- `npm run preview`
+
+### Code de mon serveur express hébergé
+
+```javascript
+const express = require('express')
+const cors = require('cors')
+const app = express()
+const port = 3000
+
+app.use(cors({allowedHeaders: ['Content-Type']}));
+
+// parse application/json
+app.use(express.json())
+
+app.get('/', (req, res) => {
+  res.send('Hello World!')
+})
+
+app.post('/', function (req, res) {
+    res.json(req.body)
+  });
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
 ```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
