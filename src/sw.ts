@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { Queue } from 'workbox-background-sync';
 
 declare let self: ServiceWorkerGlobalScope
 
@@ -26,3 +27,28 @@ registerRoute(new NavigationRoute(
   createHandlerBoundToURL('index.html'),
   { allowlist },
 ))
+
+const queue = new Queue('myQueueName');
+
+self.addEventListener('fetch', (event) => {
+  console.log("🚀 ~ self.addEventListener ~ event:", event)
+  // Add in your own criteria here to return early if this
+  // isn't a request that should use background sync.
+  if (event.request.method !== 'POST') {
+    return;
+  }
+
+  const bgSyncLogic = async () => {
+    try {
+      const response = await fetch(event.request.clone());
+      console.log("🚀 ~ bgSyncLogic ~ response:", response)
+      return response;
+    } catch (error) {
+      await queue.pushRequest({request: event.request});
+      return error;
+    }
+  };
+
+  // @ts-ignore
+  event.respondWith(bgSyncLogic());
+})
